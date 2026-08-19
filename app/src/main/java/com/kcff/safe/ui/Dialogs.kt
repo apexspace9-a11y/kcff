@@ -216,3 +216,49 @@ internal fun TransactionDialog(
         }
     )
 }
+
+@Composable
+internal fun BudgetDialog(repository: KcRepository, onDismiss: () -> Unit) {
+    var amount by remember(repository.monthlyBudget) {
+        mutableStateOf(repository.monthlyBudget.takeIf { it > 0 }?.toString() ?: "")
+    }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Hạn mức chi KC tháng") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Đặt trần chi để biết lúc nào nên khoá tay trước khi sự kiện dụ bấm thêm một vòng.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { input -> amount = input.filter { it.isDigit() } },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("KC tối đa mỗi tháng") },
+                    supportingText = { Text("Để trống hoặc nhập 0 để tắt hạn mức") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    repository.setMonthlyBudget(amount.toIntOrNull() ?: 0)
+                        .onSuccess { onDismiss() }
+                        .onFailure { error = it.message }
+                }
+            ) { Text("Lưu hạn mức") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Huỷ") }
+        }
+    )
+}
