@@ -5,35 +5,39 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-val KcCyan = Color(0xFF39D9FF)
-val KcBlue = Color(0xFF4B7DFF)
-val KcViolet = Color(0xFF8E72FF)
-val KcGold = Color(0xFFFFC928)
-val KcGreen = Color(0xFF4DE5A7)
-val KcRed = Color(0xFFFF5B76)
-val KcNavy = Color(0xFF030814)
-val KcSurface = Color(0xFF07111F)
-val KcSurfaceRaised = Color(0xFF0D192A)
+val KcCyan = Color(0xFF00E5FF)
+val KcBlue = Color(0xFF078BFF)
+val KcBlueDeep = Color(0xFF064CCB)
+val KcViolet = Color(0xFF9C63FF)
+val KcGold = Color(0xFFFFC400)
+val KcGoldHot = Color(0xFFFF9800)
+val KcGreen = Color(0xFF32F28B)
+val KcRed = Color(0xFFFF3D5A)
+val KcNavy = Color(0xFF030711)
+val KcSurface = Color(0xFF06101D)
+val KcSurfaceRaised = Color(0xFF09172A)
+val KcSurfaceBlue = Color(0xFF09244A)
+val KcTextMuted = Color(0xFF8FA7C2)
 
 private val KcffColors = darkColorScheme(
     primary = KcCyan,
     onPrimary = Color(0xFF001018),
-    primaryContainer = Color(0xFF0C3245),
-    onPrimaryContainer = Color(0xFFC6F3FF),
+    primaryContainer = KcSurfaceBlue,
+    onPrimaryContainer = Color(0xFFD7F9FF),
     secondary = KcGold,
-    onSecondary = Color(0xFF251A00),
-    secondaryContainer = Color(0xFF4D3900),
-    onSecondaryContainer = Color(0xFFFFE28A),
+    onSecondary = Color(0xFF211700),
+    secondaryContainer = Color(0xFF3B2D00),
+    onSecondaryContainer = Color(0xFFFFE386),
     tertiary = KcViolet,
-    onTertiary = Color(0xFF130C36),
+    onTertiary = Color(0xFF160B31),
     background = KcNavy,
-    onBackground = Color(0xFFF0F7FF),
+    onBackground = Color(0xFFF4F8FF),
     surface = KcSurface,
-    onSurface = Color(0xFFF0F7FF),
+    onSurface = Color(0xFFF4F8FF),
     surfaceVariant = KcSurfaceRaised,
-    onSurfaceVariant = Color(0xFFA9BDD1),
-    outline = Color(0xFF31506B),
-    outlineVariant = Color(0xFF1B3148),
+    onSurfaceVariant = KcTextMuted,
+    outline = Color(0xFF174C76),
+    outlineVariant = Color(0xFF0E2D4C),
     error = KcRed,
     onError = Color.White
 )
