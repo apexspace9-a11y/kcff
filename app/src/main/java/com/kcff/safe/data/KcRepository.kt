@@ -1,6 +1,7 @@
 package com.kcff.safe.data
 
 import android.content.Context
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import org.json.JSONArray
 import org.json.JSONObject
@@ -12,10 +13,12 @@ class KcRepository(context: Context) {
     private val prefs = context.getSharedPreferences("kcff_store", Context.MODE_PRIVATE)
     private val _vaults = mutableStateListOf<Vault>()
     private val _transactions = mutableStateListOf<KcTransaction>()
+    private val _monthlyBudget = mutableIntStateOf(prefs.getInt("monthlyBudget", 0))
 
     val vaults: List<Vault> get() = _vaults
     val transactions: List<KcTransaction> get() = _transactions.sortedByDescending { it.createdAt }
     val activeVaults: List<Vault> get() = _vaults.filterNot { it.archived }.sortedByDescending { it.createdAt }
+    val monthlyBudget: Int get() = _monthlyBudget.intValue
 
     init {
         load()
@@ -80,6 +83,13 @@ class KcRepository(context: Context) {
         return Result.success(Unit)
     }
 
+    fun setMonthlyBudget(amount: Int): Result<Unit> {
+        if (amount < 0) return Result.failure(IllegalArgumentException("Hạn mức KC không hợp lệ"))
+        _monthlyBudget.intValue = amount
+        prefs.edit().putInt("monthlyBudget", amount).apply()
+        return Result.success(Unit)
+    }
+
     fun toggleArchive(vaultId: Long) {
         val index = _vaults.indexOfFirst { it.id == vaultId }
         if (index < 0) return
@@ -108,23 +118,39 @@ class KcRepository(context: Context) {
 
     fun totalTarget(): Int = activeVaults.sumOf { it.target }
 
-    fun spentThisMonth(): Int {
+    fun totalSaved(): Int = _transactions
+        .filter { it.type == TransactionType.SAVE }
+        .sumOf { it.amount }
+
+    fun savedThisMonth(): Int = amountThisMonth(TransactionType.SAVE)
+
+    fun spentThisMonth(): Int = amountThisMonth(TransactionType.SPEND)
+
+    fun totalSpent(): Int = _transactions
+        .filter { it.type == TransactionType.SPEND }
+        .sumOf { it.amount }
+
+    fun topExpenseCategory(): Pair<String, Int>? = _transactions
+        .asSequence()
+        .filter { it.type == TransactionType.SPEND }
+        .groupBy { it.category.ifBlank { "Khác" } }
+        .mapValues { (_, items) -> items.sumOf { it.amount } }
+        .maxByOrNull { it.value }
+        ?.toPair()
+
+    fun vaultName(vaultId: Long): String = _vaults.firstOrNull { it.id == vaultId }?.name ?: "Két đã xoá"
+
+    private fun amountThisMonth(type: TransactionType): Int {
         val currentMonth = YearMonth.now()
         val zone = ZoneId.systemDefault()
         return _transactions.asSequence()
-            .filter { it.type == TransactionType.SPEND }
+            .filter { it.type == type }
             .filter {
                 val date = Instant.ofEpochMilli(it.createdAt).atZone(zone).toLocalDate()
                 YearMonth.from(date) == currentMonth
             }
             .sumOf { it.amount }
     }
-
-    fun totalSpent(): Int = _transactions
-        .filter { it.type == TransactionType.SPEND }
-        .sumOf { it.amount }
-
-    fun vaultName(vaultId: Long): String = _vaults.firstOrNull { it.id == vaultId }?.name ?: "Két đã xoá"
 
     private fun nextId(seed: Long): Long {
         var candidate = seed

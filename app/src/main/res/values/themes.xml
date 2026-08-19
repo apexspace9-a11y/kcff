@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.KCFF" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.KCFF" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/white</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#030814</item>
+        <item name="android:navigationBarColor">#030814</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowBackground">@drawable/bg_kcff_launch</item>
+        <item name="android:colorAccent">#39D9FF</item>
     </style>
 </resources>
