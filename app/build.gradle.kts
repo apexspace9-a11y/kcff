@@ -61,7 +61,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.9.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.9.0")
     implementation("androidx.compose.foundation:foundation:1.9.0")
-    implementation("androidx.compose.material:material-icons-extended:1.9.0")
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("androidx.compose.material3:material3:1.3.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling:1.9.0")
