@@ -58,7 +58,7 @@ fun KcffApp(repository: KcRepository) {
                 .border(width = 0.dp, color = Color.Transparent)
         ) {
             when (selectedTab) {
-                0 -> DashboardScreen(
+                0 -> EnhancedDashboardScreen(
                     repository = repository,
                     contentPadding = contentPadding,
                     onCreateVault = { dialogMode = DialogMode.CREATE_VAULT },
@@ -79,7 +79,7 @@ fun KcffApp(repository: KcRepository) {
                     contentPadding = contentPadding
                 )
 
-                3 -> EventsScreen(
+                3 -> EnhancedEventsScreen(
                     repository = repository,
                     contentPadding = contentPadding,
                     onCreateVault = { dialogMode = DialogMode.CREATE_VAULT },
