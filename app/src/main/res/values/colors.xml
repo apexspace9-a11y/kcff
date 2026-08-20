@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="kc_bg">#07101D</color>
+    <color name="kc_surface">#0F1D2E</color>
+    <color name="kc_surface_variant">#172A3E</color>
+    <color name="kc_gold">#FFC62A</color>
+    <color name="kc_on_gold">#07101D</color>
+    <color name="kc_text">#F4F7FB</color>
+    <color name="kc_muted">#9FB1C3</color>
+    <color name="kc_green">#50D8A6</color>
+    <color name="kc_red">#FF6970</color>
+</resources>
