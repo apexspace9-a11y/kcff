@@ -2,9 +2,7 @@ name: Build KCFF APK
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -13,37 +11,36 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.11.1"
-
-      - name: Set up Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android 35
+      - name: Install Android platform
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Build APK
-        run: gradle --no-daemon :app:assembleDebug
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
 
-      - name: Prepare artifact
-        run: cp app/build/outputs/apk/debug/app-debug.apk KCFF.apk
+      - name: Build APK
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Package APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk KC-Safe-FF.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KCFF-APK
-          path: KCFF.apk
+          name: kcff-apk
+          path: KC-Safe-FF.apk
           if-no-files-found: error

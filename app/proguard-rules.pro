@@ -1,2 +1,1 @@
--keepattributes SourceFile,LineNumberTable
--renamesourcefileattribute SourceFile
+# KC Safe FF

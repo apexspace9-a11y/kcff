@@ -3,36 +3,21 @@ plugins {
 }
 
 android {
-    namespace 'com.kcff.vault'
+    namespace 'com.kcff.safe'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.kcff.vault"
-        minSdk 24
+        applicationId 'com.kcff.safe'
+        minSdk 23
         targetSdk 35
         versionCode 1
-        versionName "1.0.0"
+        versionName '1.0.0'
     }
 
     buildTypes {
-        debug {
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
-        }
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    lint {
-        abortOnError true
-        checkReleaseBuilds true
     }
 }
