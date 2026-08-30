@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    namespace 'com.kcff.safe'
+    namespace 'com.apex.ffy9booster'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.kcff.safe'
+        applicationId 'com.apex.ffy9booster'
         minSdk 23
-        targetSdk 35
-        versionCode 3
-        versionName '1.1.1'
+        targetSdk 28
+        versionCode 1
+        versionName '1.0.0'
     }
 
     compileOptions {
@@ -28,6 +28,4 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.13.0'
 }

@@ -1,1 +1,1 @@
-# KC Safe FF
+# Intentionally minimal. No reflection-heavy libraries.

@@ -1,21 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/kc_gold</item>
-        <item name="colorOnPrimary">@color/kc_on_gold</item>
-        <item name="colorSecondary">@color/kc_green</item>
-        <item name="colorOnSecondary">@color/kc_bg</item>
-        <item name="colorSurface">@color/kc_surface</item>
-        <item name="colorSurfaceVariant">@color/kc_surface_variant</item>
-        <item name="colorOnSurface">@color/kc_text</item>
-        <item name="colorOnSurfaceVariant">@color/kc_muted</item>
-        <item name="android:windowBackground">@color/kc_bg</item>
-        <item name="android:statusBarColor">@color/kc_bg</item>
-        <item name="android:navigationBarColor">@color/kc_bg</item>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#00E5FF</item>
+        <item name="android:navigationBarColor">#070A0F</item>
+        <item name="android:statusBarColor">#070A0F</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="fontFamily">sans-serif</item>
-        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
+        <item name="android:windowBackground">#070A0F</item>
     </style>
 </resources>
