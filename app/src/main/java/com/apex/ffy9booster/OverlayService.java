@@ -49,10 +49,13 @@ public class OverlayService extends Service {
     private int cpu = -1;
     private boolean running = true;
 
-    private final Choreographer.FrameCallback frameCallback = frameTimeNanos -> {
-        if (!running) return;
-        frameCount++;
-        Choreographer.getInstance().postFrameCallback(frameCallback);
+    private final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            if (!running) return;
+            frameCount++;
+            Choreographer.getInstance().postFrameCallback(this);
+        }
     };
 
     private final Runnable updateTask = new Runnable() {
