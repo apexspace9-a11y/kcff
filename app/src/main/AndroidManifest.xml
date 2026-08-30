@@ -17,7 +17,7 @@
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_booster"
-        android:label="FF Y9 Booster VIP Pro X2"
+        android:label="FF Y9 Booster VIP Pro X3"
         android:roundIcon="@drawable/ic_booster"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -38,7 +38,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-visible floating game-session telemetry and optional Wi-Fi performance lock" />
+                android:value="User-visible floating game-session telemetry, adaptive thermal guard and optional Wi-Fi performance lock" />
         </service>
     </application>
 </manifest>
