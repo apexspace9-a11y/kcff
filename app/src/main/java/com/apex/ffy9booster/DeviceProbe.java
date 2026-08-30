@@ -1,6 +1,7 @@
 package com.apex.ffy9booster;
 
 import android.app.ActivityManager;
+import android.os.BatteryManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -8,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.PowerManager;
+import android.os.StatFs;
 import android.os.SystemClock;
 import android.view.Display;
 import android.view.WindowManager;
@@ -16,10 +18,31 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Locale;
 
 final class DeviceProbe {
     private DeviceProbe() {}
+
+    static final class NetworkSample {
+        final int medianRttMs;
+        final int jitterMs;
+        final int failurePercent;
+        final int successes;
+        final int total;
+
+        NetworkSample(int medianRttMs, int jitterMs, int failurePercent, int successes, int total) {
+            this.medianRttMs = medianRttMs;
+            this.jitterMs = jitterMs;
+            this.failurePercent = failurePercent;
+            this.successes = successes;
+            this.total = total;
+        }
+
+        static NetworkSample unavailable(int total) {
+            return new NetworkSample(-1, -1, total > 0 ? 100 : -1, 0, total);
+        }
+    }
 
     static long freeRamMb(Context context) {
         try {
@@ -32,20 +55,53 @@ final class DeviceProbe {
         }
     }
 
+    static boolean isLowMemory(Context context) {
+        try {
+            ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            return mi.lowMemory;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     static float batteryTempC(Context context) {
         Intent battery = batteryIntent(context);
         if (battery == null) return -1f;
-        int raw = battery.getIntExtra("temperature", -1);
+        int raw = battery.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
         return raw > 0 ? raw / 10f : -1f;
     }
 
     static int batteryPercent(Context context) {
         Intent battery = batteryIntent(context);
         if (battery == null) return -1;
-        int level = battery.getIntExtra("level", -1);
-        int scale = battery.getIntExtra("scale", -1);
+        int level = battery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = battery.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
         if (level < 0 || scale <= 0) return -1;
         return Math.max(0, Math.min(100, Math.round(level * 100f / scale)));
+    }
+
+    static boolean isCharging(Context context) {
+        Intent battery = batteryIntent(context);
+        if (battery == null) return false;
+        int status = battery.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        return status == BatteryManager.BATTERY_STATUS_CHARGING
+                || status == BatteryManager.BATTERY_STATUS_FULL;
+    }
+
+    static int batteryCurrentMa(Context context) {
+        try {
+            BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            if (bm == null) return -1;
+            long ua = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW);
+            if (ua == Long.MIN_VALUE || ua == 0) return -1;
+            long ma = Math.abs(ua) / 1000L;
+            if (ma <= 0 || ma > 10000) return -1;
+            return (int) ma;
+        } catch (Throwable e) {
+            return -1;
+        }
     }
 
     private static Intent batteryIntent(Context context) {
@@ -75,6 +131,16 @@ final class DeviceProbe {
         }
     }
 
+    static boolean isWifiConnected(Context context) {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo info = cm != null ? cm.getActiveNetworkInfo() : null;
+            return info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     static String networkLabel(Context context) {
         try {
             ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -98,22 +164,38 @@ final class DeviceProbe {
         }
     }
 
+    static long freeStorageMb() {
+        try {
+            StatFs stat = new StatFs("/data");
+            return stat.getAvailableBytes() / (1024L * 1024L);
+        } catch (Throwable e) {
+            return -1;
+        }
+    }
+
+    static int thermalStatus(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return -1;
+        try {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            return pm != null ? pm.getCurrentThermalStatus() : -1;
+        } catch (Throwable e) {
+            return -1;
+        }
+    }
+
     static String thermalLabel(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-                if (pm != null) {
-                    switch (pm.getCurrentThermalStatus()) {
-                        case PowerManager.THERMAL_STATUS_NONE: return "THERMAL OK";
-                        case PowerManager.THERMAL_STATUS_LIGHT: return "THERMAL LIGHT";
-                        case PowerManager.THERMAL_STATUS_MODERATE: return "THERMAL MOD";
-                        case PowerManager.THERMAL_STATUS_SEVERE: return "THERMAL SEVERE";
-                        case PowerManager.THERMAL_STATUS_CRITICAL: return "THERMAL CRIT";
-                        case PowerManager.THERMAL_STATUS_EMERGENCY: return "THERMAL EMERG";
-                        case PowerManager.THERMAL_STATUS_SHUTDOWN: return "THERMAL STOP";
-                    }
-                }
-            } catch (Throwable ignored) { }
+        int status = thermalStatus(context);
+        if (status >= 0) {
+            switch (status) {
+                case PowerManager.THERMAL_STATUS_NONE: return "THERMAL OK";
+                case PowerManager.THERMAL_STATUS_LIGHT: return "THERMAL LIGHT";
+                case PowerManager.THERMAL_STATUS_MODERATE: return "THERMAL MOD";
+                case PowerManager.THERMAL_STATUS_SEVERE: return "THERMAL SEVERE";
+                case PowerManager.THERMAL_STATUS_CRITICAL: return "THERMAL CRIT";
+                case PowerManager.THERMAL_STATUS_EMERGENCY: return "THERMAL EMERG";
+                case PowerManager.THERMAL_STATUS_SHUTDOWN: return "THERMAL STOP";
+                default: return "THERMAL ?";
+            }
         }
         float t = batteryTempC(context);
         if (t >= 43f) return "BAT HOT";
@@ -121,10 +203,37 @@ final class DeviceProbe {
         return "BAT OK";
     }
 
+    static NetworkSample probeNetwork() {
+        return probeNetwork(4, 650);
+    }
+
+    static NetworkSample probeNetwork(int count, int timeoutMs) {
+        int total = Math.max(1, Math.min(6, count));
+        String[] hosts = {"1.1.1.1", "8.8.8.8", "9.9.9.9", "208.67.222.222"};
+        int[] good = new int[total];
+        int goodCount = 0;
+
+        for (int i = 0; i < total; i++) {
+            int value = connectRtt(hosts[i % hosts.length], 443, timeoutMs);
+            if (value >= 0) good[goodCount++] = value;
+        }
+
+        if (goodCount == 0) return NetworkSample.unavailable(total);
+
+        int[] values = Arrays.copyOf(good, goodCount);
+        Arrays.sort(values);
+        int median = values[goodCount / 2];
+        if (goodCount % 2 == 0) median = (values[goodCount / 2 - 1] + values[goodCount / 2]) / 2;
+
+        long deviation = 0;
+        for (int value : values) deviation += Math.abs(value - median);
+        int jitter = (int) Math.round(deviation / (double) goodCount);
+        int failure = Math.round((total - goodCount) * 100f / total);
+        return new NetworkSample(median, jitter, failure, goodCount, total);
+    }
+
     static int connectRttMs() {
-        int rtt = connectRtt("1.1.1.1", 443, 900);
-        if (rtt >= 0) return rtt;
-        return connectRtt("8.8.8.8", 443, 900);
+        return probeNetwork(2, 650).medianRttMs;
     }
 
     private static int connectRtt(String host, int port, int timeoutMs) {
@@ -180,5 +289,12 @@ final class DeviceProbe {
     static String hzText(Context context) {
         float hz = displayHz(context);
         return hz > 0 ? String.format(Locale.US, "%.0f Hz", hz) : "? Hz";
+    }
+
+    static String storageText() {
+        long mb = freeStorageMb();
+        if (mb < 0) return "?";
+        if (mb >= 1024) return String.format(Locale.US, "%.1f GB trống", mb / 1024f);
+        return mb + " MB trống";
     }
 }
