@@ -1,41 +1,43 @@
-# FF Y9 Booster VIP Pro X3
+# FF Y9 Booster VIP Pro X4
 
-V3 là một **game-session telemetry/tuner không-root** cho Huawei Y9 2019 / Kirin 710 và Android 6+.
+V4 là một **game-session stability monitor/tuner không-root** cho Huawei Y9 2019 / Kirin 710, vẫn chạy từ Android 6+.
 
-## V3 nâng cấp gì
-- **ADAPTIVE mode** tự chuyển TURBO / BALANCED / COOL theo nhiệt pin, Android thermal status và Power Saver.
-- Có **hysteresis nhiệt** để tránh nhảy mode liên tục quanh một ngưỡng.
-- **Thermal guard bắt buộc:** nếu máy quá nóng hoặc Android báo thermal `SEVERE` trở lên, session tạm hạ về COOL kể cả khi người dùng chọn TURBO.
-- **Multi-probe network:** nhiều TCP connect tới các endpoint Internet công cộng, tính RTT* median, Jitter* và Failure*.
-- HUD V3: profile hiệu lực, Display Hz, RTT*, Jitter*, Failure*, CPU, RAM, nhiệt, pin, thermal status, mạng, Wi-Fi lock và session timer.
-- HUD kéo được; chạm để thu gọn/mở rộng.
-- Lưu **3 phiên gần nhất**: thời gian, nhiệt max, RAM thấp nhất, RTT* trung bình, Jitter* trung bình, Failure* cao nhất và số lần AUTO-COOL.
-- Preflight Score chấm RAM, memory pressure, nhiệt, thermal status, Power Saver và chất lượng mạng.
-- Hiển thị trạng thái sạc, dòng sạc nếu firmware hỗ trợ và dung lượng lưu trữ trống.
-- Shortcut tới Battery Saver, Battery Optimization, Display Settings và App Settings.
+## V4 nâng cấp gì
 
-## Các preset
-- **ADAPTIVE:** mặc định. Tự chọn mode theo trạng thái thiết bị.
-- **TURBO NET:** Android 10+ dùng `WIFI_MODE_FULL_LOW_LATENCY`; Android cũ fallback `WIFI_MODE_FULL_HIGH_PERF`.
-- **BALANCED:** Wi-Fi high-performance với nhịp probe vừa phải.
-- **COOL:** không giữ Wi-Fi performance lock, probe thưa hơn.
+- **Adaptive+ thermal guard:** tự chọn TURBO / BALANCED / COOL theo nhiệt, Android thermal status và Power Saver.
+- **Dynamic Probe:** khi đường truyền ổn, V4 dùng ít probe hơn và đo thưa hơn; khi RTT*/Jitter*/Failure* xấu, nó chuyển sang deep probe nhanh hơn.
+- **Memory Pressure:** dùng `ActivityManager.MemoryInfo` gồm `availMem`, `totalMem`, `threshold` và `lowMemory`, thay vì đánh giá chỉ bằng "RAM trống".
+- **Rolling Stability Score:** HUD chấm 0–100 theo nhiệt, RAM pressure và mạng trong phiên.
+- **Session Grade:** khi tắt session, V4 lưu Grade A+/A/B/C/D và nguyên nhân chính: MẠNG / NHIỆT / RAM / ỔN ĐỊNH.
+- Lưu **5 phiên gần nhất** và có nút chia sẻ báo cáo dạng text.
+- Lưu thêm CPU trung bình/cao nhất, RAM pressure cao nhất, pin đầu/cuối phiên, tỷ lệ mẫu mạng bất ổn.
+- Vẫn có Display Hz, pin, dòng sạc (nếu firmware cung cấp), storage trống và HUD kéo/thu gọn.
 
-## RTT* / Jitter* / Failure* nghĩa là gì?
-Các chỉ số có dấu `*` được đo từ TCP connect tới endpoint Internet công cộng như Cloudflare, Google, Quad9 và OpenDNS.
+## Wi-Fi mode
 
-- RTT*: trung vị thời gian connect thành công.
-- Jitter*: độ lệch trung bình của các mẫu RTT quanh trung vị.
-- Failure*: tỷ lệ TCP probe thất bại.
+- Android 10+ TURBO yêu cầu `WIFI_MODE_FULL_LOW_LATENCY`.
+- Android cũ dùng `WIFI_MODE_FULL_HIGH_PERF`.
+- COOL không giữ Wi-Fi lock.
+- Hỗ trợ thực tế phụ thuộc Android/firmware/phần cứng. Wi-Fi lock không phải phép "giảm ping server" và có thể tốn pin.
 
-Chúng hữu ích để phát hiện đường truyền xấu nhưng **không phải ping, jitter hay packet loss trực tiếp tới server Garena**.
+## RTT* / Jitter* / Failure*
 
-## FPS đâu?
-Một app Android bình thường không-root không có quyền đọc frame timing nội bộ của Free Fire. V3 chỉ hiển thị **Display Hz** và không giả VSYNC thành FPS game.
+Các chỉ số có dấu `*` đến từ TCP connect tới endpoint Internet công cộng. Chúng giúp phát hiện đường truyền chậm hoặc thiếu ổn định nhưng **không phải ping, jitter hay packet loss trực tiếp tới server Garena**.
+
+## FPS
+
+V4 không hiển thị "FPS game" giả. App Android không-root bình thường không được đọc frame timing nội bộ của Free Fire. HUD hiển thị **Display Hz** thay cho việc đổi tên VSYNC thành FPS.
 
 ## Không làm
+
 - Không sửa APK/OBB/data Free Fire.
-- Không inject, hook, cheat, macro hoặc bypass anti-cheat.
-- Không ép CPU/GPU clock và không quảng cáo unlock FPS giả.
+- Không inject, hook, macro, cheat hoặc bypass anti-cheat.
+- Không ép xung CPU/GPU.
+- Không quảng cáo unlock 90/120 FPS giả.
 
 ## Build
-GitHub Actions build debug APK sau mỗi push lên `main`. Artifact V3 là `ff-y9-booster-v3-apk`.
+
+GitHub Actions build debug APK sau mỗi push lên `main`.
+
+Artifact: `ff-y9-booster-v4-apk`
+APK: `FF-Y9-Booster-VIP-Pro-X4-v4.0.0.apk`

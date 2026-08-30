@@ -24,6 +24,31 @@ import java.util.Locale;
 final class DeviceProbe {
     private DeviceProbe() {}
 
+    static final class MemorySnapshot {
+        final long availMb;
+        final long totalMb;
+        final long thresholdMb;
+        final boolean lowMemory;
+        final int pressurePercent;
+
+        MemorySnapshot(long availMb, long totalMb, long thresholdMb, boolean lowMemory) {
+            this.availMb = availMb;
+            this.totalMb = totalMb;
+            this.thresholdMb = thresholdMb;
+            this.lowMemory = lowMemory;
+            if (availMb >= 0 && totalMb > 0) {
+                long used = Math.max(0, totalMb - Math.min(totalMb, availMb));
+                this.pressurePercent = (int) Math.max(0, Math.min(100, Math.round(used * 100f / totalMb)));
+            } else {
+                this.pressurePercent = -1;
+            }
+        }
+
+        static MemorySnapshot unavailable() {
+            return new MemorySnapshot(-1, -1, -1, false);
+        }
+    }
+
     static final class NetworkSample {
         final int medianRttMs;
         final int jitterMs;
@@ -42,28 +67,33 @@ final class DeviceProbe {
         static NetworkSample unavailable(int total) {
             return new NetworkSample(-1, -1, total > 0 ? 100 : -1, 0, total);
         }
+
+        boolean unstable() {
+            return failurePercent >= 25 || jitterMs >= 30 || medianRttMs >= 120;
+        }
+    }
+
+    static MemorySnapshot memory(Context context) {
+        try {
+            ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            return new MemorySnapshot(
+                    mi.availMem / (1024L * 1024L),
+                    mi.totalMem / (1024L * 1024L),
+                    mi.threshold / (1024L * 1024L),
+                    mi.lowMemory);
+        } catch (Throwable e) {
+            return MemorySnapshot.unavailable();
+        }
     }
 
     static long freeRamMb(Context context) {
-        try {
-            ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
-            am.getMemoryInfo(mi);
-            return mi.availMem / (1024L * 1024L);
-        } catch (Throwable e) {
-            return -1;
-        }
+        return memory(context).availMb;
     }
 
     static boolean isLowMemory(Context context) {
-        try {
-            ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
-            am.getMemoryInfo(mi);
-            return mi.lowMemory;
-        } catch (Throwable e) {
-            return false;
-        }
+        return memory(context).lowMemory;
     }
 
     static float batteryTempC(Context context) {
@@ -183,6 +213,19 @@ final class DeviceProbe {
         }
     }
 
+    static float thermalHeadroom(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return -1f;
+        try {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            if (pm == null) return -1f;
+            float value = pm.getThermalHeadroom(5);
+            if (Float.isNaN(value) || value < 0f) return -1f;
+            return value;
+        } catch (Throwable e) {
+            return -1f;
+        }
+    }
+
     static String thermalLabel(Context context) {
         int status = thermalStatus(context);
         if (status >= 0) {
@@ -223,17 +266,15 @@ final class DeviceProbe {
         int[] values = Arrays.copyOf(good, goodCount);
         Arrays.sort(values);
         int median = values[goodCount / 2];
-        if (goodCount % 2 == 0) median = (values[goodCount / 2 - 1] + values[goodCount / 2]) / 2;
+        if (goodCount % 2 == 0) {
+            median = (values[goodCount / 2 - 1] + values[goodCount / 2]) / 2;
+        }
 
         long deviation = 0;
         for (int value : values) deviation += Math.abs(value - median);
         int jitter = (int) Math.round(deviation / (double) goodCount);
         int failure = Math.round((total - goodCount) * 100f / total);
         return new NetworkSample(median, jitter, failure, goodCount, total);
-    }
-
-    static int connectRttMs() {
-        return probeNetwork(2, 650).medianRttMs;
     }
 
     private static int connectRtt(String host, int port, int timeoutMs) {

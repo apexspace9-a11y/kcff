@@ -44,25 +44,31 @@ public class MainActivity extends Activity {
     private static final int RED = Color.rgb(255, 104, 112);
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+
     private TextView statusValue;
     private TextView scoreValue;
     private TextView adviceValue;
     private TextView ramValue;
-    private TextView cpuValue;
+    private TextView pressureValue;
     private TextView tempValue;
+    private TextView cpuValue;
     private TextView rttValue;
     private TextView jitterValue;
     private TextView failureValue;
     private TextView hzValue;
     private TextView batteryValue;
+    private TextView modeValue;
     private TextView networkValue;
-    private TextView lastSessionValue;
+    private TextView historyValue;
     private Button profileButton;
 
     private int profile;
+    private int lastCpu = -1;
     private int lastRtt = -1;
     private int lastJitter = -1;
     private int lastFailure = -1;
+    private int lastScore = -1;
+    private String lastIssue = "CHƯA ĐO";
     private boolean overlayRequestPending;
 
     @Override
@@ -70,9 +76,13 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
+
         profile = getSharedPreferences(PREFS, MODE_PRIVATE)
                 .getInt(KEY_PROFILE, PROFILE_ADAPTIVE);
-        if (profile < PROFILE_TURBO || profile > PROFILE_ADAPTIVE) profile = PROFILE_ADAPTIVE;
+        if (profile < PROFILE_TURBO || profile > PROFILE_ADAPTIVE) {
+            profile = PROFILE_ADAPTIVE;
+        }
+
         setContentView(buildUi());
         ensureNotificationPermission();
         refreshMetrics();
@@ -98,158 +108,175 @@ public class MainActivity extends Activity {
         root.setPadding(dp(16), dp(18), dp(16), dp(30));
         scroll.addView(root, new ScrollView.LayoutParams(-1, -2));
 
-        root.addView(text("HUAWEI Y9 2019 • KIRIN 710 • V3 ADAPTIVE", 11, CYAN, true));
-        TextView title = text("FF Y9 BOOSTER\nVIP PRO X3", 31, TEXT, true);
+        root.addView(text("HUAWEI Y9 2019 • KIRIN 710 • V4 STABILITY", 11, CYAN, true));
+
+        TextView title = text("FF Y9 BOOSTER\nVIP PRO X4", 31, TEXT, true);
         title.setLineSpacing(0, 0.92f);
         title.setPadding(0, dp(4), 0, dp(4));
         root.addView(title);
 
         String model = Build.MANUFACTURER + " " + Build.MODEL + " • Android " + Build.VERSION.RELEASE;
-        TextView sub = text(model + "\nAdaptive thermal guard • multi-probe network • session history. Không root, không sửa game.", 13, MUTED, false);
+        TextView sub = text(
+                model + "\nAdaptive+ • dynamic network probe • memory pressure • session grade. Không root, không sửa game.",
+                13, MUTED, false);
         sub.setLineSpacing(dp(2), 1f);
         root.addView(sub, lp(-1, -2, 0, dp(14)));
 
         LinearLayout hero = card(CARD, 18);
         hero.setPadding(dp(16), dp(15), dp(16), dp(15));
         root.addView(hero, lp(-1, -2, 0, dp(12)));
+
         statusValue = text("ĐANG CHẨN ĐOÁN…", 11, LIME, true);
         hero.addView(statusValue);
+
         scoreValue = text("— / 100", 29, TEXT, true);
         scoreValue.setPadding(0, dp(5), 0, dp(2));
         hero.addView(scoreValue);
-        adviceValue = text("Đang đọc nhiệt, RAM, pin và chất lượng mạng.", 12, MUTED, false);
+
+        adviceValue = text("Đang phân tích nhiệt, RAM pressure và độ ổn định mạng.", 12, MUTED, false);
         adviceValue.setLineSpacing(dp(1), 1f);
         hero.addView(adviceValue);
 
-        LinearLayout m1 = new LinearLayout(this);
-        m1.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout m1 = metricRow();
         ramValue = metric(m1, "RAM TRỐNG");
-        tempValue = metric(m1, "NHIỆT PIN");
+        pressureValue = metric(m1, "RAM PRESSURE*");
         root.addView(m1, lp(-1, -2, 0, dp(8)));
 
-        LinearLayout m2 = new LinearLayout(this);
-        m2.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout m2 = metricRow();
+        tempValue = metric(m2, "NHIỆT PIN");
         cpuValue = metric(m2, "CPU");
-        rttValue = metric(m2, "RTT*");
         root.addView(m2, lp(-1, -2, 0, dp(8)));
 
-        LinearLayout m3 = new LinearLayout(this);
-        m3.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout m3 = metricRow();
+        rttValue = metric(m3, "RTT*");
         jitterValue = metric(m3, "JITTER*");
-        failureValue = metric(m3, "FAIL*");
         root.addView(m3, lp(-1, -2, 0, dp(8)));
 
-        LinearLayout m4 = new LinearLayout(this);
-        m4.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout m4 = metricRow();
+        failureValue = metric(m4, "FAIL*");
         hzValue = metric(m4, "DISPLAY");
-        batteryValue = metric(m4, "PIN");
         root.addView(m4, lp(-1, -2, 0, dp(8)));
+
+        LinearLayout m5 = metricRow();
+        batteryValue = metric(m5, "PIN");
+        modeValue = metric(m5, "MODE");
+        modeValue.setText(profileShortName(profile));
+        root.addView(m5, lp(-1, -2, 0, dp(8)));
 
         LinearLayout netCard = card(CARD_2, 14);
         netCard.setPadding(dp(13), dp(11), dp(13), dp(11));
-        networkValue = text("Mạng: —", 12, TEXT, true);
+        networkValue = text("Thiết bị: —", 12, TEXT, true);
         networkValue.setLineSpacing(dp(2), 1f);
         netCard.addView(networkValue);
         root.addView(netCard, lp(-1, -2, 0, dp(12)));
 
-        Button launch = button("⚡  ADAPT + MỞ FREE FIRE", CYAN, BG);
+        Button launch = button("⚡  ADAPTIVE+ + MỞ FREE FIRE", CYAN, BG);
         launch.setOnClickListener(v -> prepareAndLaunch("com.dts.freefireth"));
         root.addView(launch, lp(-1, dp(54), 0, dp(9)));
 
-        LinearLayout pair = new LinearLayout(this);
-        pair.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout pair = metricRow();
         Button max = button("FREE FIRE MAX", CARD_2, TEXT);
         max.setOnClickListener(v -> prepareAndLaunch("com.dts.freefiremax"));
-        Button hud = button("BẬT HUD V3", CARD_2, TEXT);
+        Button hud = button("BẬT HUD V4", CARD_2, TEXT);
         hud.setOnClickListener(v -> ensureHudPermissionAndStart());
         pair.addView(max, new LinearLayout.LayoutParams(0, dp(50), 1f));
         pair.addView(space(dp(9)));
         pair.addView(hud, new LinearLayout.LayoutParams(0, dp(50), 1f));
         root.addView(pair, lp(-1, -2, 0, dp(9)));
 
-        LinearLayout pair2 = new LinearLayout(this);
-        pair2.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout pair2 = metricRow();
         profileButton = button(profileButtonText(), CARD_2, LIME);
         profileButton.setOnClickListener(v -> cycleProfile());
-        Button stop = button("TẮT + LƯU SESSION", CARD_2, WARN);
+        Button stop = button("TẮT + CHẤM ĐIỂM", CARD_2, WARN);
         stop.setOnClickListener(v -> {
             stopService(new Intent(this, OverlayService.class));
-            Toast.makeText(this, "Đã tắt session và lưu thống kê.", Toast.LENGTH_SHORT).show();
-            handler.postDelayed(this::refreshMetrics, 350);
+            Toast.makeText(this, "Đã tắt session. V4 đang lưu Grade + thống kê.", Toast.LENGTH_SHORT).show();
+            handler.postDelayed(this::refreshMetrics, 450);
         });
         pair2.addView(profileButton, new LinearLayout.LayoutParams(0, dp(50), 1f));
         pair2.addView(space(dp(9)));
         pair2.addView(stop, new LinearLayout.LayoutParams(0, dp(50), 1f));
         root.addView(pair2, lp(-1, -2, 0, dp(9)));
 
-        Button refresh = button("↻  MULTI-PROBE CHẨN ĐOÁN LẠI", CARD_2, TEXT);
+        Button refresh = button("↻  DEEP PREFLIGHT 4 PROBES", CARD_2, TEXT);
         refresh.setOnClickListener(v -> refreshMetrics());
         root.addView(refresh, lp(-1, dp(48), 0, dp(14)));
 
-        root.addView(section("V3 ADAPTIVE LÀM GÌ"));
-        LinearLayout preset = card(CARD, 16);
-        preset.setPadding(dp(15), dp(12), dp(15), dp(10));
-        preset.addView(line("A", "ADAPTIVE", "Tự chọn TURBO / BALANCED / COOL theo nhiệt, thermal status và Power Saver. Có hysteresis để tránh đổi mode liên tục."));
-        preset.addView(line("T", "TURBO NET", "Android 10+: Wi-Fi low-latency; Android cũ fallback high-performance. Nếu máy quá nóng, thermal guard vẫn có quyền hạ COOL."));
-        preset.addView(line("B", "BALANCED", "Wi-Fi high-performance với nhịp probe vừa phải, hợp phiên chơi dài."));
-        preset.addView(line("C", "COOL", "Không giữ Wi-Fi performance lock và probe thưa hơn để booster tự tạo ít nhiệt hơn."));
-        root.addView(preset, lp(-1, -2, 0, dp(12)));
+        root.addView(section("V4 ADAPTIVE+"));
 
-        root.addView(section("ĐO MẠNG KHÔNG TỰ LỪA MÌNH"));
-        LinearLayout truth = card(CARD, 16);
-        truth.setPadding(dp(15), dp(12), dp(15), dp(10));
-        truth.addView(line("RTT", "RTT* median", "Lấy trung vị từ nhiều TCP connect tới endpoint Internet công cộng, đỡ bị một mẫu dị thường làm sai kết luận."));
-        truth.addView(line("JIT", "Jitter*", "Độ lệch giữa các probe. Cao thường nghĩa là đường truyền thiếu ổn định."));
-        truth.addView(line("FAIL", "Failure*", "Tỷ lệ probe TCP thất bại. Không phải packet-loss trực tiếp tới server Garena."));
-        truth.addView(line("Hz", "Display Hz", "Tần số quét màn hình. V3 vẫn không giả Display Hz hay VSYNC thành FPS engine của Free Fire."));
-        root.addView(truth, lp(-1, -2, 0, dp(12)));
+        LinearLayout features = card(CARD, 16);
+        features.setPadding(dp(15), dp(12), dp(15), dp(10));
+        features.addView(line("A+", "Adaptive thermal guard",
+                "Tự chọn TURBO/BALANCED/COOL theo nhiệt và Power Saver. Nếu quá nóng, COOL được ưu tiên kể cả bạn chọn TURBO."));
+        features.addView(line("DP", "Dynamic Probe",
+                "Mạng ổn thì đo nhẹ/thưa; bất ổn thì tăng thành deep probe nhanh hơn. Mục tiêu là theo dõi tốt mà booster tự tạo ít overhead."));
+        features.addView(line("MP", "Memory Pressure",
+                "Kết hợp RAM khả dụng, tổng RAM, low-memory flag và ngưỡng Android. Không thần thánh hóa một con số 'RAM trống'."));
+        features.addView(line("S", "Stability Score",
+                "HUD chấm 0–100 theo nhiệt, RAM và mạng. Đây là điểm chẩn đoán, không phải benchmark FPS."));
+        root.addView(features, lp(-1, -2, 0, dp(12)));
 
-        root.addView(section("3 PHIÊN GẦN NHẤT"));
+        root.addView(section("5 PHIÊN GẦN NHẤT • SESSION GRADE"));
+
         LinearLayout history = card(CARD, 16);
         history.setPadding(dp(15), dp(13), dp(15), dp(13));
-        lastSessionValue = text("Chưa có dữ liệu phiên.", 11, MUTED, false);
-        lastSessionValue.setLineSpacing(dp(2), 1f);
-        history.addView(lastSessionValue);
+        historyValue = text("Chưa có dữ liệu V4.", 11, MUTED, false);
+        historyValue.setLineSpacing(dp(2), 1f);
+        history.addView(historyValue);
         root.addView(history, lp(-1, -2, 0, dp(9)));
 
-        Button clearHistory = button("XÓA LỊCH SỬ SESSION", CARD_2, MUTED);
-        clearHistory.setOnClickListener(v -> clearSessionHistory());
-        root.addView(clearHistory, lp(-1, dp(44), 0, dp(12)));
+        LinearLayout historyButtons = metricRow();
+        Button share = button("CHIA SẺ BÁO CÁO", CARD_2, TEXT);
+        share.setOnClickListener(v -> shareReport());
+        Button clear = button("XÓA LỊCH SỬ", CARD_2, MUTED);
+        clear.setOnClickListener(v -> clearSessionHistory());
+        historyButtons.addView(share, new LinearLayout.LayoutParams(0, dp(46), 1f));
+        historyButtons.addView(space(dp(9)));
+        historyButtons.addView(clear, new LinearLayout.LayoutParams(0, dp(46), 1f));
+        root.addView(historyButtons, lp(-1, -2, 0, dp(12)));
 
-        LinearLayout settingsPair = new LinearLayout(this);
-        settingsPair.setOrientation(LinearLayout.HORIZONTAL);
+        root.addView(section("CÀI ĐẶT HỮU ÍCH"));
+
+        LinearLayout settings1 = metricRow();
         Button batterySettings = button("PIN / TIẾT KIỆM", CARD_2, TEXT);
         batterySettings.setOnClickListener(v -> openBatterySettings());
         Button optimization = button("TỐI ƯU PIN", CARD_2, TEXT);
         optimization.setOnClickListener(v -> openBatteryOptimizationSettings());
-        settingsPair.addView(batterySettings, new LinearLayout.LayoutParams(0, dp(48), 1f));
-        settingsPair.addView(space(dp(9)));
-        settingsPair.addView(optimization, new LinearLayout.LayoutParams(0, dp(48), 1f));
-        root.addView(settingsPair, lp(-1, -2, 0, dp(9)));
+        settings1.addView(batterySettings, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        settings1.addView(space(dp(9)));
+        settings1.addView(optimization, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        root.addView(settings1, lp(-1, -2, 0, dp(9)));
 
-        LinearLayout settingsPair2 = new LinearLayout(this);
-        settingsPair2.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout settings2 = metricRow();
         Button displaySettings = button("MÀN HÌNH", CARD_2, TEXT);
         displaySettings.setOnClickListener(v -> openDisplaySettings());
         Button appSettings = button("QUYỀN APP", CARD_2, TEXT);
         appSettings.setOnClickListener(v -> openAppSettings());
-        settingsPair2.addView(displaySettings, new LinearLayout.LayoutParams(0, dp(48), 1f));
-        settingsPair2.addView(space(dp(9)));
-        settingsPair2.addView(appSettings, new LinearLayout.LayoutParams(0, dp(48), 1f));
-        root.addView(settingsPair2, lp(-1, -2, 0, dp(12)));
+        settings2.addView(displaySettings, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        settings2.addView(space(dp(9)));
+        settings2.addView(appSettings, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        root.addView(settings2, lp(-1, -2, 0, dp(12)));
 
         TextView legal = text(
-                "Không inject/hook, không sửa APK/OBB/data, không macro và không can thiệp anti-cheat. "
-                        + "RTT*/Jitter*/Failure* là probe Internet công cộng, không phải ping server Garena. "
-                        + "App tối ưu các biến số mà Android cho phép, chứ không thể đàm phán lại định luật nhiệt động lực học với Kirin 710.",
+                "Không inject/hook, không sửa APK/OBB/data, không macro và không bypass anti-cheat. "
+                        + "RTT*/Jitter*/Fail* là probe Internet công cộng, không phải ping/packet-loss server Garena. "
+                        + "RAM Pressure* là ước lượng từ thông tin bộ nhớ Android. V4 cố chẩn đoán đúng nguyên nhân lag, "
+                        + "thay vì dán chữ PRO MAX vào nút rồi cầu vật lý hợp tác.",
                 11, MUTED, false);
         legal.setLineSpacing(dp(2), 1f);
         root.addView(legal);
+
         return scroll;
     }
 
+    private LinearLayout metricRow() {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        return row;
+    }
+
     private void refreshMetrics() {
-        long ram = DeviceProbe.freeRamMb(this);
+        DeviceProbe.MemorySnapshot mem = DeviceProbe.memory(this);
         float temp = DeviceProbe.batteryTempC(this);
         int battery = DeviceProbe.batteryPercent(this);
         int currentMa = DeviceProbe.batteryCurrentMa(this);
@@ -257,38 +284,57 @@ public class MainActivity extends Activity {
         boolean saver = DeviceProbe.isPowerSave(this);
         boolean connected = DeviceProbe.isConnected(this);
         int thermal = DeviceProbe.thermalStatus(this);
+        float headroom = DeviceProbe.thermalHeadroom(this);
 
-        ramValue.setText(ram >= 0 ? ram + " MB" : "?");
+        ramValue.setText(mem.availMb >= 0 ? mem.availMb + " MB" : "?");
+        pressureValue.setText(mem.pressurePercent >= 0
+                ? mem.pressurePercent + "%" + (mem.lowMemory ? " LOW" : "")
+                : "?");
         tempValue.setText(temp > 0 ? String.format(Locale.US, "%.1f°C", temp) : "?");
         batteryValue.setText(battery >= 0 ? battery + "%" + (charging ? " CHG" : "") : "?");
         hzValue.setText(DeviceProbe.hzText(this));
 
-        String powerText = saver ? "POWER SAVE ON" : "Power Save off";
-        String chargeText = charging ? "ĐANG SẠC" + (currentMa > 0 ? " ~" + currentMa + "mA" : "") : "không sạc";
-        String live = isSessionActive() ? " • SESSION LIVE" : "";
+        String chargeText = charging
+                ? "đang sạc" + (currentMa > 0 ? " ~" + currentMa + "mA" : "")
+                : "không sạc";
+        String session = isSessionActive()
+                ? "SESSION LIVE • Stability " + getSharedPreferences(PREFS, MODE_PRIVATE)
+                    .getInt("live_stability", -1)
+                : "session off";
+        String headroomText = headroom >= 0
+                ? " • Headroom5s " + String.format(Locale.US, "%.2f", headroom)
+                : "";
         networkValue.setText(
-                "Mạng: " + DeviceProbe.networkLabel(this) + " • " + DeviceProbe.thermalLabel(this) + live
-                        + "\n" + powerText + " • " + chargeText + " • " + DeviceProbe.storageText());
+                DeviceProbe.networkLabel(this) + " • " + DeviceProbe.thermalLabel(this) + headroomText
+                        + "\n" + session + " • " + (saver ? "POWER SAVE ON" : "Power Save off")
+                        + " • " + chargeText
+                        + "\nRAM total " + (mem.totalMb >= 0 ? mem.totalMb + "MB" : "?")
+                        + " • low threshold " + (mem.thresholdMb >= 0 ? mem.thresholdMb + "MB" : "?")
+                        + " • " + DeviceProbe.storageText());
 
-        updateScore(ram, temp, battery, saver, connected, lastRtt, lastJitter, lastFailure, thermal);
         loadSessionHistory();
+        updateScore(mem, temp, battery, saver, connected, lastRtt, lastJitter, lastFailure, thermal);
 
         statusValue.setText("ĐANG ĐO CPU + 4 NETWORK PROBES…");
         new Thread(() -> {
             int cpu = DeviceProbe.sampleCpuPercent();
             DeviceProbe.NetworkSample net = connected
-                    ? DeviceProbe.probeNetwork()
+                    ? DeviceProbe.probeNetwork(4, 650)
                     : DeviceProbe.NetworkSample.unavailable(4);
+
             handler.post(() -> {
+                lastCpu = cpu;
                 lastRtt = net.medianRttMs;
                 lastJitter = net.jitterMs;
                 lastFailure = net.failurePercent;
+
                 cpuValue.setText(cpu >= 0 ? cpu + "%" : "?");
                 rttValue.setText(net.medianRttMs >= 0 ? net.medianRttMs + " ms" : "?");
                 jitterValue.setText(net.jitterMs >= 0 ? net.jitterMs + " ms" : "?");
                 failureValue.setText(net.failurePercent >= 0 ? net.failurePercent + "%" : "?");
+
                 updateScore(
-                        DeviceProbe.freeRamMb(this),
+                        DeviceProbe.memory(this),
                         DeviceProbe.batteryTempC(this),
                         DeviceProbe.batteryPercent(this),
                         DeviceProbe.isPowerSave(this),
@@ -298,133 +344,163 @@ public class MainActivity extends Activity {
                         net.failurePercent,
                         DeviceProbe.thermalStatus(this));
             });
-        }, "preflight-v3-probe").start();
+        }, "v4-preflight").start();
     }
 
-    private void updateScore(long ram, float temp, int battery, boolean saver, boolean connected,
-                             int rtt, int jitter, int failure, int thermal) {
+    private void updateScore(DeviceProbe.MemorySnapshot mem,
+                             float temp,
+                             int battery,
+                             boolean saver,
+                             boolean connected,
+                             int rtt,
+                             int jitter,
+                             int failure,
+                             int thermal) {
         int score = 100;
-        String advice = "Tình trạng khá ổn. ADAPTIVE sẽ tự điều chỉnh session khi nhiệt thay đổi.";
-
-        if (battery >= 0 && battery <= 15) {
-            score -= 7;
-            advice = "Pin thấp. Nếu chơi lâu, tránh vừa sạc nhanh vừa ép TURBO khi máy đã nóng.";
-        }
-
-        if (ram >= 0 && ram < 1200) score -= 5;
-        if (ram >= 0 && ram < 800) {
-            score -= 9;
-            advice = "RAM hơi căng. Free Fire thường hợp Y9 2019 hơn bản MAX.";
-        }
-        if (ram >= 0 && ram < 450) {
-            score -= 12;
-            advice = "RAM trống rất thấp. Đóng app nặng thủ công trước khi vào trận.";
-        }
-        if (DeviceProbe.isLowMemory(this)) {
-            score -= 8;
-            advice = "Android đang báo memory pressure. Đây là dấu hiệu đáng tin hơn một nút 'RAM cleaner' trang trí.";
-        }
-
-        if (rtt >= 60) score -= 4;
-        if (rtt >= 100) {
-            score -= 7;
-            advice = "RTT* cao. Lag có khả năng nghiêng về đường mạng.";
-        }
-        if (rtt >= 180) {
-            score -= 8;
-            advice = "RTT* rất cao. Wi-Fi performance lock không thể cứu một đường truyền vốn đã chậm.";
-        }
-
-        if (jitter >= 20) score -= 4;
-        if (jitter >= 45) {
-            score -= 8;
-            advice = "Jitter* cao: độ trễ thay đổi mạnh giữa các probe. Mạng thiếu ổn định.";
-        }
-        if (jitter >= 90) {
-            score -= 6;
-            advice = "Jitter* cực cao. Đây thường khó chịu hơn một RTT hơi cao nhưng ổn định.";
-        }
-
-        if (failure >= 25) {
-            score -= 8;
-            advice = "Có probe mạng thất bại. Kiểm tra Wi-Fi/router hoặc chuyển mạng.";
-        }
-        if (failure >= 50) {
-            score -= 12;
-            advice = "Failure* cao. Đừng đổ hết cho GPU khi Internet đang biểu tình.";
-        }
-
-        if (saver) {
-            score -= 15;
-            advice = "Đang bật tiết kiệm pin. ADAPTIVE sẽ nghiêng COOL; tắt Power Saver nếu ưu tiên game.";
-        }
-
-        if (temp >= 39.5f) score -= 7;
-        if (temp >= 41f) {
-            score -= 11;
-            advice = "Nhiệt khá cao. ADAPTIVE sẽ hạ mode để tránh booster góp thêm nhiệt.";
-        }
-        if (temp >= 43f) {
-            score -= 14;
-            advice = "Máy nóng. Throttle nhiệt có thể tụt xung; nên để máy nguội trước.";
-        }
-        if (thermal >= PowerManager.THERMAL_STATUS_SEVERE) {
-            score -= 18;
-            advice = "Android đang báo thermal SEVERE trở lên. V3 sẽ ép session về COOL.";
-        }
+        int thermalRisk = 0;
+        int ramRisk = 0;
+        int netRisk = 0;
 
         if (!connected) {
-            score -= 35;
-            advice = "Không có mạng. Phần mềm vẫn chưa thể phát Internet bằng niềm tin.";
+            score -= 40;
+            netRisk = 4;
+        }
+
+        if (mem.lowMemory) {
+            score -= 22;
+            ramRisk = Math.max(ramRisk, 4);
+        }
+        if (mem.availMb >= 0 && mem.availMb < 420) {
+            score -= 22;
+            ramRisk = Math.max(ramRisk, 4);
+        } else if (mem.availMb >= 0 && mem.availMb < 700) {
+            score -= 12;
+            ramRisk = Math.max(ramRisk, 3);
+        } else if (mem.availMb >= 0 && mem.availMb < 1000) {
+            score -= 5;
+            ramRisk = Math.max(ramRisk, 1);
+        }
+        if (mem.pressurePercent >= 94) {
+            score -= 10;
+            ramRisk = Math.max(ramRisk, 3);
+        } else if (mem.pressurePercent >= 88) {
+            score -= 5;
+            ramRisk = Math.max(ramRisk, 2);
+        }
+
+        if (temp >= 44f || thermal >= PowerManager.THERMAL_STATUS_SEVERE) {
+            score -= 34;
+            thermalRisk = 4;
+        } else if (temp >= 42f || thermal >= PowerManager.THERMAL_STATUS_MODERATE) {
+            score -= 19;
+            thermalRisk = 3;
+        } else if (temp >= 40f || thermal >= PowerManager.THERMAL_STATUS_LIGHT) {
+            score -= 8;
+            thermalRisk = 1;
+        }
+
+        if (saver) score -= 12;
+        if (battery >= 0 && battery <= 12) score -= 5;
+
+        if (rtt >= 180) {
+            score -= 18;
+            netRisk = Math.max(netRisk, 4);
+        } else if (rtt >= 110) {
+            score -= 10;
+            netRisk = Math.max(netRisk, 3);
+        } else if (rtt >= 70) {
+            score -= 4;
+            netRisk = Math.max(netRisk, 1);
+        }
+
+        if (jitter >= 55) {
+            score -= 18;
+            netRisk = Math.max(netRisk, 4);
+        } else if (jitter >= 30) {
+            score -= 10;
+            netRisk = Math.max(netRisk, 3);
+        } else if (jitter >= 18) {
+            score -= 4;
+            netRisk = Math.max(netRisk, 1);
+        }
+
+        if (failure >= 50) {
+            score -= 18;
+            netRisk = Math.max(netRisk, 4);
+        } else if (failure >= 25) {
+            score -= 8;
+            netRisk = Math.max(netRisk, 3);
         }
 
         score = Math.max(0, Math.min(100, score));
-        String grade = score >= 85 ? "SẴN SÀNG"
-                : score >= 65 ? "TẠM ỔN"
-                : score >= 45 ? "CẦN CHỈNH"
-                : "KHÔNG ĐẸP";
+        lastScore = score;
 
+        if (thermalRisk == 0 && ramRisk == 0 && netRisk == 0) {
+            lastIssue = "ỔN ĐỊNH";
+        } else if (netRisk >= thermalRisk && netRisk >= ramRisk) {
+            lastIssue = "MẠNG";
+        } else if (thermalRisk >= ramRisk) {
+            lastIssue = "NHIỆT";
+        } else {
+            lastIssue = "RAM";
+        }
+
+        String grade = score >= 90 ? "READY" : score >= 75 ? "GOOD" : score >= 60 ? "WATCH" : "RISK";
         scoreValue.setText(score + " / 100 • " + grade);
-        scoreValue.setTextColor(score >= 80 ? LIME : score >= 55 ? WARN : RED);
+        scoreValue.setTextColor(score >= 80 ? LIME : score >= 60 ? WARN : RED);
+        statusValue.setText("✓ PREFLIGHT V4 • " + lastIssue + " • " + profileName(profile));
+
+        String advice;
+        if ("NHIỆT".equals(lastIssue)) {
+            advice = "Nhiệt là rủi ro chính. ADAPTIVE/COOL hợp lý hơn; throttling thì booster cũng không thương lượng được với silicon.";
+        } else if ("RAM".equals(lastIssue)) {
+            advice = "Memory pressure cao. Đóng ứng dụng nặng thủ công và ưu tiên Free Fire thường thay vì MAX.";
+        } else if ("MẠNG".equals(lastIssue)) {
+            advice = "Đường truyền đang là rủi ro chính. Nhìn RTT*/Jitter*/Fail* trước khi đổ mọi tội lỗi lên Kirin 710.";
+        } else if (saver) {
+            advice = "Máy khá ổn nhưng Power Saver đang bật. Tắt tiết kiệm pin trước khi chơi nếu cần hiệu năng ổn định.";
+        } else {
+            advice = "Trạng thái hiện tại khá ổn. V4 sẽ dùng Dynamic Probe để theo dõi nếu mạng hoặc nhiệt đổi trong trận.";
+        }
         adviceValue.setText(advice);
-
-        String recommended = recommendedProfile(temp, saver, thermal);
-        statusValue.setText("✓ PREFLIGHT • MODE " + profileName(profile) + " • GỢI Ý " + recommended);
-    }
-
-    private String recommendedProfile(float temp, boolean saver, int thermal) {
-        if (thermal >= PowerManager.THERMAL_STATUS_SEVERE || temp >= 42.5f || saver) return "COOL";
-        if (thermal >= PowerManager.THERMAL_STATUS_MODERATE || temp >= 40.5f) return "BALANCED";
-        return "ADAPTIVE";
     }
 
     private void cycleProfile() {
-        profile = (profile + 1) % 4;
-        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_PROFILE, profile).apply();
-        profileButton.setText(profileButtonText());
+        if (profile == PROFILE_ADAPTIVE) profile = PROFILE_TURBO;
+        else if (profile == PROFILE_TURBO) profile = PROFILE_BALANCED;
+        else if (profile == PROFILE_BALANCED) profile = PROFILE_COOL;
+        else profile = PROFILE_ADAPTIVE;
 
+        getSharedPreferences(PREFS, MODE_PRIVATE)
+                .edit()
+                .putInt(KEY_PROFILE, profile)
+                .apply();
+
+        profileButton.setText(profileButtonText());
+        if (modeValue != null) modeValue.setText(profileShortName(profile));
+
+        Intent service = new Intent(this, OverlayService.class)
+                .putExtra(KEY_PROFILE, profile);
         if (isSessionActive()) {
-            Intent service = new Intent(this, OverlayService.class).putExtra(KEY_PROFILE, profile);
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(service);
                 else startService(service);
             } catch (Throwable ignored) { }
         }
 
-        Toast.makeText(this, "Preset: " + profileName(profile), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Mode: " + profileName(profile), Toast.LENGTH_SHORT).show();
         refreshMetrics();
     }
 
     private void prepareAndLaunch(String pkg) {
-        float temp = DeviceProbe.batteryTempC(this);
-        int thermal = DeviceProbe.thermalStatus(this);
-        if (temp >= 44f || thermal >= PowerManager.THERMAL_STATUS_SEVERE) {
-            Toast.makeText(this, "Cảnh báo: máy đang rất nóng; V3 sẽ ép session về COOL.", Toast.LENGTH_LONG).show();
-        }
-
         refreshMetrics();
-        if (canDrawOverlays()) startHud();
-        else Toast.makeText(this, "HUD chưa có quyền overlay; vẫn mở game bình thường.", Toast.LENGTH_SHORT).show();
+        if (canDrawOverlays()) {
+            startHud();
+        } else {
+            Toast.makeText(this,
+                    "HUD chưa có quyền overlay; game vẫn mở bình thường.",
+                    Toast.LENGTH_SHORT).show();
+        }
 
         handler.postDelayed(() -> {
             if (!launchPackage(pkg)) {
@@ -438,12 +514,16 @@ public class MainActivity extends Activity {
             startHud();
             return;
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             overlayRequestPending = true;
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Intent intent = new Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             startActivity(intent);
-            Toast.makeText(this, "Bật “Hiển thị trên ứng dụng khác” rồi quay lại.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                    "Bật “Hiển thị trên ứng dụng khác” rồi quay lại.",
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -452,10 +532,17 @@ public class MainActivity extends Activity {
     }
 
     private void startHud() {
-        Intent service = new Intent(this, OverlayService.class).putExtra(KEY_PROFILE, profile);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(service);
-        else startService(service);
-        Toast.makeText(this, "HUD V3 • " + profileName(profile), Toast.LENGTH_SHORT).show();
+        Intent service = new Intent(this, OverlayService.class)
+                .putExtra(KEY_PROFILE, profile);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(service);
+            else startService(service);
+            Toast.makeText(this,
+                    "HUD V4 • " + profileName(profile),
+                    Toast.LENGTH_SHORT).show();
+        } catch (Throwable e) {
+            Toast.makeText(this, "Không thể bật HUD trên firmware này.", Toast.LENGTH_LONG).show();
+        }
     }
 
     private boolean launchPackage(String pkg) {
@@ -474,7 +561,71 @@ public class MainActivity extends Activity {
         SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
         if (!p.getBoolean("session_active", false)) return false;
         long heartbeat = p.getLong("session_heartbeat_ms", 0);
-        return heartbeat > 0 && System.currentTimeMillis() - heartbeat < 12000;
+        return heartbeat > 0 && System.currentTimeMillis() - heartbeat < 15000;
+    }
+
+    private void loadSessionHistory() {
+        SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+        StringBuilder out = new StringBuilder();
+
+        for (int i = 0; i < 5; i++) {
+            SessionRecord r = SessionRecord.decode(p.getString("history_" + i, null));
+            if (r == null) continue;
+            if (out.length() > 0) out.append("\n\n");
+            out.append(r.toDisplayLine(i + 1));
+        }
+
+        if (out.length() == 0) {
+            historyValue.setText(
+                    "Chưa có session V4. Bật HUD, chơi rồi bấm TẮT + CHẤM ĐIỂM để lưu Grade.");
+        } else {
+            historyValue.setText(out.toString());
+        }
+    }
+
+    private void clearSessionHistory() {
+        SharedPreferences.Editor e = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
+        for (int i = 0; i < 5; i++) e.remove("history_" + i);
+        e.remove("last_session_score");
+        e.remove("last_session_grade");
+        e.remove("last_session_issue");
+        e.apply();
+        loadSessionHistory();
+        Toast.makeText(this, "Đã xóa lịch sử session.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void shareReport() {
+        SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+        StringBuilder report = new StringBuilder();
+        report.append("FF Y9 Booster V4 Stability Report\n");
+        report.append(Build.MANUFACTURER).append(" ").append(Build.MODEL)
+                .append(" • Android ").append(Build.VERSION.RELEASE).append("\n");
+        report.append("Preflight: ")
+                .append(lastScore >= 0 ? lastScore + "/100" : "?")
+                .append(" • issue=").append(lastIssue)
+                .append(" • mode=").append(profileName(profile)).append("\n");
+        report.append("Current: CPU=").append(lastCpu >= 0 ? lastCpu + "%" : "?")
+                .append(", RTT*=").append(lastRtt >= 0 ? lastRtt + "ms" : "?")
+                .append(", JIT*=").append(lastJitter >= 0 ? lastJitter + "ms" : "?")
+                .append(", FAIL*=").append(lastFailure >= 0 ? lastFailure + "%" : "?")
+                .append("\n\nRecent sessions:\n");
+
+        int count = 0;
+        for (int i = 0; i < 5; i++) {
+            SessionRecord r = SessionRecord.decode(p.getString("history_" + i, null));
+            if (r == null) continue;
+            report.append(i + 1).append(". ").append(r.toShareLine()).append("\n");
+            count++;
+        }
+        if (count == 0) report.append("No session data yet.\n");
+
+        report.append("\n* Internet public-endpoint telemetry, not Garena server telemetry.");
+
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, "FF Y9 Booster V4 Report");
+        send.putExtra(Intent.EXTRA_TEXT, report.toString());
+        startActivity(Intent.createChooser(send, "Chia sẻ báo cáo V4"));
     }
 
     private void ensureNotificationPermission() {
@@ -497,7 +648,7 @@ public class MainActivity extends Activity {
         try {
             startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
         } catch (Throwable e) {
-            openAppSettings();
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
         }
     }
 
@@ -510,77 +661,38 @@ public class MainActivity extends Activity {
     }
 
     private void openAppSettings() {
-        Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Intent i = new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.parse("package:" + getPackageName()));
         startActivity(i);
     }
 
-    private void loadSessionHistory() {
-        SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
-        StringBuilder out = new StringBuilder();
-        int shown = 0;
-
-        for (int i = 0; i < 3; i++) {
-            SessionRecord record = SessionRecord.decode(p.getString("history_" + i, ""));
-            if (record == null) continue;
-            if (shown > 0) out.append("\n\n");
-            shown++;
-            out.append(record.toDisplayLine(shown));
-        }
-
-        if (shown == 0) {
-            long duration = p.getLong("last_duration_s", 0);
-            if (duration > 0) {
-                float maxTemp = p.getFloat("last_max_temp", -1f);
-                long minRam = p.getLong("last_min_ram", -1);
-                int avgRtt = p.getInt("last_avg_rtt", -1);
-                int avgJitter = p.getInt("last_avg_jitter", -1);
-                out.append("Dữ liệu legacy V2 • ")
-                        .append(String.format(Locale.US, "%02d:%02d", duration / 60, duration % 60))
-                        .append("\nNhiệt max ")
-                        .append(maxTemp > 0 ? String.format(Locale.US, "%.1f°C", maxTemp) : "?")
-                        .append(" • RAM min ").append(minRam >= 0 ? minRam + "M" : "?")
-                        .append(" • RTT* ").append(avgRtt >= 0 ? avgRtt + "ms" : "?")
-                        .append(" • JIT* ").append(avgJitter >= 0 ? avgJitter + "ms" : "?");
-            } else {
-                out.append("Chưa có dữ liệu. Bật HUD, chơi game rồi bấm TẮT + LƯU SESSION.");
-            }
-        }
-
-        lastSessionValue.setText(out.toString());
-    }
-
-    private void clearSessionHistory() {
-        SharedPreferences.Editor e = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
-        for (int i = 0; i < 3; i++) e.remove("history_" + i);
-        e.remove("last_duration_s")
-                .remove("last_max_temp")
-                .remove("last_min_ram")
-                .remove("last_avg_rtt")
-                .remove("last_avg_jitter")
-                .remove("last_max_failure")
-                .apply();
-        loadSessionHistory();
-        Toast.makeText(this, "Đã xóa lịch sử session.", Toast.LENGTH_SHORT).show();
-    }
-
     static String profileName(int p) {
+        if (p == PROFILE_TURBO) return "TURBO NET";
         if (p == PROFILE_BALANCED) return "BALANCED";
         if (p == PROFILE_COOL) return "COOL";
-        if (p == PROFILE_ADAPTIVE) return "ADAPTIVE";
-        return "TURBO NET";
+        return "ADAPTIVE";
+    }
+
+    static String profileShortName(int p) {
+        if (p == PROFILE_TURBO) return "TURBO";
+        if (p == PROFILE_BALANCED) return "BAL";
+        if (p == PROFILE_COOL) return "COOL";
+        return "ADAPT";
     }
 
     private String profileButtonText() {
-        return "MODE: " + profileName(profile);
+        return "MODE: " + profileShortName(profile);
     }
 
     private TextView metric(LinearLayout parent, String label) {
         LinearLayout box = card(CARD, 13);
         box.setPadding(dp(12), dp(9), dp(12), dp(9));
+
         TextView l = text(label, 9, MUTED, true);
         TextView v = text("—", 17, TEXT, true);
         v.setPadding(0, dp(3), 0, 0);
+
         box.addView(l);
         box.addView(v);
         parent.addView(box, new LinearLayout.LayoutParams(0, dp(68), 1f));
@@ -605,10 +717,12 @@ public class MainActivity extends Activity {
         copy.setOrientation(LinearLayout.VERTICAL);
         copy.setPadding(dp(11), 0, 0, 0);
         copy.addView(text(title, 13, TEXT, true));
+
         TextView d = text(desc, 11, MUTED, false);
         d.setPadding(0, dp(2), 0, 0);
         d.setLineSpacing(dp(1), 1f);
         copy.addView(d);
+
         row.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
         return row;
     }
@@ -634,10 +748,11 @@ public class MainActivity extends Activity {
         Button b = new Button(this);
         b.setText(label);
         b.setTextColor(fgColor);
-        b.setTextSize(11.5f);
+        b.setTextSize(12);
         b.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         b.setAllCaps(false);
-        b.setPadding(dp(7), 0, dp(7), 0);
+        b.setPadding(dp(8), 0, dp(8), 0);
+
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(bgColor);
         bg.setCornerRadius(dp(14));
