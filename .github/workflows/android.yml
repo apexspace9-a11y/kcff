@@ -36,11 +36,11 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk FF-Y9-Booster-VIP-Pro-X2-v2.0.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk FF-Y9-Booster-VIP-Pro-X3-v3.0.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ff-y9-booster-v2-apk
-          path: FF-Y9-Booster-VIP-Pro-X2-v2.0.0.apk
+          name: ff-y9-booster-v3-apk
+          path: FF-Y9-Booster-VIP-Pro-X3-v3.0.0.apk
           if-no-files-found: error
