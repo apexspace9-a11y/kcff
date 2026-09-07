@@ -1,24 +1,29 @@
-# KCFF 2.0 — Free Fire Diamond Manager Offline
+# KCFF v3.0 — Quản lý kim cương Free Fire offline
 
-KCFF là app Android native để quản lý kim cương Free Fire hoàn toàn offline. App không khai báo quyền Internet, không đăng nhập Garena và không gửi dữ liệu ra ngoài thiết bị.
+Ứng dụng Android native chạy offline hoàn toàn, không có quyền Internet.
 
-## Tính năng
-- Dashboard: KC tổng, KC sẵn, KC đang tiết kiệm, KC thẻ còn chờ nhận.
-- Thẻ tuần: +100 KC ngay, 50 KC/ngày × 7 ngày, tổng 450 KC.
-- Thẻ tháng: +500 KC ngay, 70 KC/ngày × 30 ngày, tổng 2.600 KC.
-- Nhận từng thẻ hoặc nhận tất cả KC thẻ trong ngày.
-- Quản lý chi tiêu theo danh mục và ngân sách tháng.
-- Hoàn tác khoản chi và hoàn KC về số dư.
-- Chiến dịch tiết kiệm có mục tiêu, deadline, số KC cần giữ mỗi ngày, gửi/rút KC.
-- Thống kê KC vào/ra theo tháng, biểu đồ chi tiêu 7 ngày, phân bổ theo danh mục.
-- Backup/restore JSON bằng Android Storage Access Framework, không cần quyền bộ nhớ.
-- Dữ liệu lưu cục bộ bằng SharedPreferences.
+## Điểm mới v3
 
-## Build
-GitHub Actions build `app-debug.apk` sau mỗi lần push lên `main`.
+- Nhập **thẻ tuần đang chạy** với số ngày còn lại (1–7), **không cộng 100 KC ban đầu**.
+- Nhập tương tự cho thẻ tháng đang chạy (1–30), không cộng 500 KC ban đầu.
+- Thống kê riêng KC nhận từ **thẻ tuần** và **thẻ tháng**, gồm toàn thời gian, tháng hiện tại và phần từ thẻ nhập thủ công.
+- Nhắc nhận KC hằng ngày bằng notification offline, có chọn giờ và tự khôi phục sau khi khởi động lại máy.
+- Dashboard 5 tab: Tổng quan / Thẻ / Chi tiêu / Tiết kiệm / Thống kê.
+- Nhận tất cả thẻ trong ngày.
+- Ngân sách chi tiêu theo nhóm, cảnh báo vượt ngân sách, hoàn tác khoản chi.
+- Chiến dịch tiết kiệm có deadline và gợi ý KC/ngày.
+- Backup/restore JSON cục bộ.
 
-```bash
-gradle :app:assembleDebug
-```
+## Logic thẻ
 
-Yêu cầu Android 6.0 (API 23) trở lên.
+- Thẻ tuần mới: +100 KC ngay, sau đó 50 KC/ngày × 7.
+- Thẻ tháng mới: +500 KC ngay, sau đó 70 KC/ngày × 30 = 2.600 KC.
+- Thẻ nhập thủ công: chỉ quản lý số ngày còn lại, không cộng thưởng ban đầu.
+
+## Quyền
+
+- Không có `android.permission.INTERNET`.
+- `POST_NOTIFICATIONS`: để nhắc nhận KC trên Android mới.
+- `RECEIVE_BOOT_COMPLETED`: để khôi phục lịch nhắc sau khi khởi động lại máy.
+
+Dữ liệu lưu trong `SharedPreferences` trên thiết bị.
