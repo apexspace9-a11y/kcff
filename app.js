@@ -76,7 +76,7 @@ function isPassActive(pass) {
 
 function getPendingFor(type) {
   return state.passes
-    .filter(p => p.type === type)
+    .filter(p => p.type === type && isPassActive(p))
     .reduce((sum, pass) => {
       const cfg = PASS_TYPES[pass.type];
       return sum + Math.max(0, cfg.days - pass.claimedDates.length) * cfg.daily;
@@ -216,8 +216,8 @@ function renderPasses() {
   root.innerHTML = state.passes.map(pass => {
     const cfg = PASS_TYPES[pass.type];
     const claimed = pass.claimedDates.length;
-    const pending = Math.max(0, cfg.days - claimed) * cfg.daily;
     const active = isPassActive(pass);
+    const pending = active ? Math.max(0, cfg.days - claimed) * cfg.daily : 0;
     const claimable = canClaimToday(pass);
     const status = claimed >= cfg.days ? 'Đã nhận đủ' : active ? 'Đang hoạt động' : 'Đã hết hạn';
     return `
