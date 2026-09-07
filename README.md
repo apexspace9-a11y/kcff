@@ -1,43 +1,31 @@
-# FF Y9 Booster VIP Pro X4
+# KCFF - Quản lý kim cương Free Fire
 
-V4 là một **game-session stability monitor/tuner không-root** cho Huawei Y9 2019 / Kirin 710, vẫn chạy từ Android 6+.
+Web app/PWA nhỏ gọn để quản lý kim cương cá nhân. Không kết nối Garena/Free Fire và không yêu cầu backend.
 
-## V4 nâng cấp gì
+## Tính năng
 
-- **Adaptive+ thermal guard:** tự chọn TURBO / BALANCED / COOL theo nhiệt, Android thermal status và Power Saver.
-- **Dynamic Probe:** khi đường truyền ổn, V4 dùng ít probe hơn và đo thưa hơn; khi RTT*/Jitter*/Failure* xấu, nó chuyển sang deep probe nhanh hơn.
-- **Memory Pressure:** dùng `ActivityManager.MemoryInfo` gồm `availMem`, `totalMem`, `threshold` và `lowMemory`, thay vì đánh giá chỉ bằng "RAM trống".
-- **Rolling Stability Score:** HUD chấm 0–100 theo nhiệt, RAM pressure và mạng trong phiên.
-- **Session Grade:** khi tắt session, V4 lưu Grade A+/A/B/C/D và nguyên nhân chính: MẠNG / NHIỆT / RAM / ỔN ĐỊNH.
-- Lưu **5 phiên gần nhất** và có nút chia sẻ báo cáo dạng text.
-- Lưu thêm CPU trung bình/cao nhất, RAM pressure cao nhất, pin đầu/cuối phiên, tỷ lệ mẫu mạng bất ổn.
-- Vẫn có Display Hz, pin, dòng sạc (nếu firmware cung cấp), storage trống và HUD kéo/thu gọn.
+- Tổng quan: KC tổng, KC sẵn, KC thẻ tuần còn lại, KC thẻ tháng còn lại.
+- Thẻ tuần 7 ngày: +100 KC ngay, 50 KC/ngày, tổng 450 KC.
+- Thẻ tháng 30 ngày: +500 KC ngay, 70 KC/ngày, tổng 2.600 KC.
+- Mỗi thẻ chỉ nhận thưởng ngày tối đa một lần/ngày theo ngày trên thiết bị.
+- Quản lý khoản chi, tự trừ từ KC sẵn.
+- Chiến dịch tiết kiệm: tạo mục tiêu, chuyển KC vào mục tiêu, hoàn KC về ví.
+- Lịch sử biến động và xuất sao lưu JSON.
+- Dữ liệu lưu trong `localStorage` của trình duyệt.
+- Responsive, cài được như PWA khi host qua HTTPS.
 
-## Wi-Fi mode
+## Chạy
 
-- Android 10+ TURBO yêu cầu `WIFI_MODE_FULL_LOW_LATENCY`.
-- Android cũ dùng `WIFI_MODE_FULL_HIGH_PERF`.
-- COOL không giữ Wi-Fi lock.
-- Hỗ trợ thực tế phụ thuộc Android/firmware/phần cứng. Wi-Fi lock không phải phép "giảm ping server" và có thể tốn pin.
+Có thể mở bằng một static server bất kỳ. Ví dụ:
 
-## RTT* / Jitter* / Failure*
+```bash
+python3 -m http.server 8080
+```
 
-Các chỉ số có dấu `*` đến từ TCP connect tới endpoint Internet công cộng. Chúng giúp phát hiện đường truyền chậm hoặc thiếu ổn định nhưng **không phải ping, jitter hay packet loss trực tiếp tới server Garena**.
+Sau đó mở `http://localhost:8080`.
 
-## FPS
+## Lưu ý logic
 
-V4 không hiển thị "FPS game" giả. App Android không-root bình thường không được đọc frame timing nội bộ của Free Fire. HUD hiển thị **Display Hz** thay cho việc đổi tên VSYNC thành FPS.
+`KC tổng = KC sẵn + KC đang tiết kiệm`.
 
-## Không làm
-
-- Không sửa APK/OBB/data Free Fire.
-- Không inject, hook, macro, cheat hoặc bypass anti-cheat.
-- Không ép xung CPU/GPU.
-- Không quảng cáo unlock 90/120 FPS giả.
-
-## Build
-
-GitHub Actions build debug APK sau mỗi push lên `main`.
-
-Artifact: `ff-y9-booster-v4-apk`
-APK: `FF-Y9-Booster-VIP-Pro-X4-v4.0.0.apk`
+Phần `KC thẻ tuần` và `KC thẻ tháng` là số phần thưởng hằng ngày còn lại của tất cả thẻ tương ứng. Quyền lợi chưa nhận chưa được cộng vào `KC tổng` cho tới khi bấm nhận.

@@ -1,0 +1,10 @@
+{
+  "name": "KCFF - Quản lý kim cương",
+  "short_name": "KCFF",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#06101d",
+  "theme_color": "#07111f",
+  "lang": "vi",
+  "description": "Quản lý kim cương Free Fire, thẻ tuần/tháng, chi tiêu và chiến dịch tiết kiệm."
+}
