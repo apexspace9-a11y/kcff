@@ -1,24 +1,24 @@
-# KCFF Offline
+# KCFF 2.0 — Free Fire Diamond Manager Offline
 
-App Android quản lý kim cương Free Fire, chạy hoàn toàn offline.
+KCFF là app Android native để quản lý kim cương Free Fire hoàn toàn offline. App không khai báo quyền Internet, không đăng nhập Garena và không gửi dữ liệu ra ngoài thiết bị.
 
-## Chức năng
-- Kim cương tổng = KC sẵn + KC đang giữ trong chiến dịch tiết kiệm.
-- Thêm/điều chỉnh KC sẵn thủ công.
-- Thẻ tuần: +100 KC ngay, sau đó 50 KC/ngày trong 7 ngày (tổng 450 KC).
-- Thẻ tháng: +500 KC ngay, sau đó 70 KC/ngày trong 30 ngày (tổng 2.600 KC).
-- Mỗi thẻ chỉ nhận thưởng hằng ngày 1 lần/ngày và tự hết hạn.
-- Quản lý chi tiêu KC.
-- Chiến dịch tiết kiệm theo mục tiêu, chuyển KC vào quỹ và hoàn KC khi đóng.
-- Lịch sử biến động.
-- Toàn bộ dữ liệu lưu bằng SharedPreferences trên thiết bị.
-- AndroidManifest **không có quyền INTERNET**.
+## Tính năng
+- Dashboard: KC tổng, KC sẵn, KC đang tiết kiệm, KC thẻ còn chờ nhận.
+- Thẻ tuần: +100 KC ngay, 50 KC/ngày × 7 ngày, tổng 450 KC.
+- Thẻ tháng: +500 KC ngay, 70 KC/ngày × 30 ngày, tổng 2.600 KC.
+- Nhận từng thẻ hoặc nhận tất cả KC thẻ trong ngày.
+- Quản lý chi tiêu theo danh mục và ngân sách tháng.
+- Hoàn tác khoản chi và hoàn KC về số dư.
+- Chiến dịch tiết kiệm có mục tiêu, deadline, số KC cần giữ mỗi ngày, gửi/rút KC.
+- Thống kê KC vào/ra theo tháng, biểu đồ chi tiêu 7 ngày, phân bổ theo danh mục.
+- Backup/restore JSON bằng Android Storage Access Framework, không cần quyền bộ nhớ.
+- Dữ liệu lưu cục bộ bằng SharedPreferences.
 
-## Build APK
-GitHub Actions tự build `app-debug.apk` sau mỗi push vào `main`.
-Mở tab **Actions** → workflow **Build Android APK** → run mới nhất → tải artifact `KCFF-offline-debug`.
+## Build
+GitHub Actions build `app-debug.apk` sau mỗi lần push lên `main`.
 
-## Yêu cầu
-Android 6.0 (API 23) trở lên.
+```bash
+gradle :app:assembleDebug
+```
 
-> KCFF là công cụ ghi chép cá nhân, không liên kết Garena/Free Fire và không đăng nhập tài khoản game.
+Yêu cầu Android 6.0 (API 23) trở lên.
